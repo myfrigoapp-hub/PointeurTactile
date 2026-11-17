@@ -2,12 +2,14 @@ name: Compiler l'APK
 on:
   push:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: unzip -o "PointeurTactile (1).zip"
+      - run: unzip -o PointeurTactile-v3.zip
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -17,7 +19,14 @@ jobs:
           gradle-version: "8.9"
       - run: gradle assembleDebug
         working-directory: PointeurTactile
+      - run: cp PointeurTactile/app/build/outputs/apk/debug/app-debug.apk PointeurTactile.apk
       - uses: actions/upload-artifact@v4
         with:
           name: PointeurTactile-apk
-          path: PointeurTactile/app/build/outputs/apk/debug/*.apk
+          path: PointeurTactile.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: derniere-version
+          name: Dernière version
+          make_latest: true
+          files: PointeurTactile.apk
