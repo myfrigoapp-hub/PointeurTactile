@@ -9,10 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Decompresser la v5
-        run: |
-          rm -rf PointeurTactile
-          unzip -o "$(ls PointeurTactile-v5*.zip | head -1)"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -20,4 +16,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-      - run: gradle assembleD
+      - name: Decompresser et compiler la v5
+        run: |
+          rm -rf build_src && mkdir build_src
+          unzip -o "$(ls PointeurTactile-v5*.zip | head -1)" -d build_src
+          ls -R build_src | head -40
+          dir="$(dirname "$(find build_src -name settings.gradle.kts | head -1)")"
+          echo "Projet trouve dans : $dir"
+          cd "$dir"
+          gradle assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/PointeurTactile.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PointeurTactile-apk
+          path: PointeurTactile.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: derniere-version
+          name: Dernière version
+          make_latest: true
+          files: PointeurTactile.apk
